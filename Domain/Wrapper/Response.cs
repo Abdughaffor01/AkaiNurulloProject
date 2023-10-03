@@ -1,16 +1,29 @@
 ﻿using System.Net;
 
-namespace Domain;
+namespace Domain.Wrapper;
 public class Response<T>
 {
     public int StatusCode { get; set; }
-    public string Mesegge { get; set; }
+    public List<string> Errors { get; set; }
     public T Data { get; set; }
-    public Response(HttpStatusCode code) => StatusCode = (int)code;
-    public Response(T data) => Data =data;
-    public Response(HttpStatusCode code,string messege)
+
+
+    public Response()
+    {
+        
+    }
+    public Response(T data)
+    {
+        Data = data;
+        StatusCode = 200;
+    }
+
+    public Response(HttpStatusCode code,string message)
     {
         StatusCode = (int)code;
-        Mesegge = messege;
+        Errors = new List<string>()
+        {
+            message
+        };
     }
 }

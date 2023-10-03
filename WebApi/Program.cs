@@ -1,4 +1,6 @@
 using Infrastructure;
+using Infrastructure.AutoMapper;
+using Infrastructure.Services.StudentServices;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,7 +25,6 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();

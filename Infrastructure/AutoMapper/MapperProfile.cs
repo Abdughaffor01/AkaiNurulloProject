@@ -1,17 +1,18 @@
 ﻿using AutoMapper;
 using Domain;
+using Domain.DTOs.StudentDTOs;
 
-namespace Infrastructure;
-public class MapperProfile:Profile
+namespace Infrastructure.AutoMapper;
+public class MapperProfile : Profile
 {
     public MapperProfile()
     {
-        CreateMap<Student, AddStudentDto>().ReverseMap();
-        CreateMap<GetStudentDto, Student>().ReverseMap()
-            .ForMember(sDto => sDto.FulName, opt => opt.MapFrom(s => $"{s.FirstName} {s.LastName}"))
-            .ForMember(sDto => sDto.EmailAddress, opt => opt.MapFrom(s =>s.Email));
-        CreateMap<BaseStudentDto,Student>().ReverseMap();
-
-            
+        CreateMap<Student, AddStudentDto>();
+        CreateMap<AddStudentDto,Student>();
+        CreateMap<Student,GetStudentDto>()
+            .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => $"{src.FirstName} {src.LastName}"))
+            .ForMember(dest => dest.EmailAddress, opt => opt.MapFrom(src => src.Email))
+            .ForMember(dest => dest.Gender, opt => opt.MapFrom(src => src.Gender == Gender.Male ? "Male" : "Female"));
+        CreateMap<BaseStudentDto, Student>().ReverseMap();
     }
 }

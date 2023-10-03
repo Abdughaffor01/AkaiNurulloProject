@@ -1,8 +1,12 @@
-﻿using AutoMapper;
+﻿using System.Net;
+using AutoMapper;
 using Domain;
+using Domain.DTOs.StudentDTOs;
+using Domain.Filters;
+using Domain.Wrapper;
 using Microsoft.EntityFrameworkCore;
-using System.Net;
-namespace Infrastructure;
+
+namespace Infrastructure.Services.StudentServices;
 public class StudentService : IStudentService
 {
     private readonly DataContext _context;
@@ -13,31 +17,20 @@ public class StudentService : IStudentService
         _mapper = mapper;
     }
 
-    public async Task<Response<List<GetStudentDto>>> GetStudentsAsync()
+    public async Task<PaginationResponse<List<GetStudentDto>>> GetStudentsAsync(GetStudentFilter filter)
     {
-        try
-        {
-            var students = await _context.Students.Select(s=>new GetStudentDto() { 
-                Id=s.Id,
-                FulName=s.FirstName+" "+s.LastName,
-                Address=s.Address,
-                BirthDate=s.BirthDate,
-                EmailAddress=s.Email,
-                Gender=s.Gender,
-                JoinDate=s.JoinDate,
-                Phone=s.Phone
-            }).ToListAsync();
-            if (students.Count == 0) return new Response<List<GetStudentDto>>(HttpStatusCode.NoContent);
+        var students = _context.Students.AsQueryable();
+            if (filter.Name != null)
+            {
+                students = students.Where(st => st.FirstName.Contains(filter.Name));
+            }
 
-            // AutoMapper var mapperStudents=_mapper.Map<List<GetStudentDto>>(students);
+            filter = new GetStudentFilter(filter.PageNumber, filter.PageSize);
+            var totalRecords = await students.CountAsync();
+            var paged = students.Skip((filter.PageNumber - 1) * filter.PageSize).Take(filter.PageSize).ToList();
+            var mappedStudents=_mapper.Map<List<GetStudentDto>>(paged);
 
-            return new Response<List<GetStudentDto>>(students);
-            
-        }
-        catch (Exception ex)
-        {
-            return new Response<List<GetStudentDto>>(HttpStatusCode.InternalServerError, ex.Message);
-        }
+            return new PaginationResponse<List<GetStudentDto>>(mappedStudents,filter.PageNumber,filter.PageSize,totalRecords);
     }
 
     public async Task<Response<GetStudentDto>> GetStudentByIdAsync(int id)
@@ -45,22 +38,11 @@ public class StudentService : IStudentService
         try
         {
             var student = await _context.Students.FindAsync(id);
-            if (student == null) return new Response<GetStudentDto>(HttpStatusCode.NoContent);
+            if (student == null) return new Response<GetStudentDto>(HttpStatusCode.NotFound,"not found");
+            
+            var mapperStudents=_mapper.Map<GetStudentDto>(student);
 
-            var studentMap = new GetStudentDto() { 
-                Id = id,
-                Address = student.Address,
-                BirthDate = student.BirthDate,
-                EmailAddress = student.Email,
-                FulName = student.FirstName+" "+student.LastName,
-                Gender = student.Gender,
-                Phone = student.Phone,
-                JoinDate=student.JoinDate
-            };
-
-            // AutoMapper var mapperStudents=_mapper.Map<List<GetStudentDto>>(students);
-
-            return new Response<GetStudentDto>(studentMap);
+            return new Response<GetStudentDto>(mapperStudents);
 
         }
         catch (Exception ex)
@@ -73,21 +55,9 @@ public class StudentService : IStudentService
     {
         try
         {
-            var student = new Student()
-            {
-                FirstName = model.FirstName,
-                LastName = model.LastName,
-                Address = model.Address,
-                BirthDate = model.BirthDate,
-                Email = model.Email,
-                Gender = model.Gender,
-                Phone = model.Phone,
-                JoinDate = DateTime.UtcNow
-            };
-
             //automapper
-            //var student = _mapper.Map<Student>(model);
-            //student.JoinDate = DateTime.UtcNow;
+            var student = _mapper.Map<Student>(model);
+            student.JoinDate = DateTime.UtcNow;
 
             await _context.Students.AddAsync(student);
             await _context.SaveChangesAsync();
@@ -104,21 +74,10 @@ public class StudentService : IStudentService
         try
         {
             var student = await _context.Students.FindAsync(model.Id);
-            if (student == null) return new Response<BaseStudentDto>(HttpStatusCode.NoContent);
-            student.FirstName = model.FirstName;
-            student.LastName = model.LastName;
-            student.Address = model.Address;
-            student.BirthDate = model.BirthDate;
-            student.Email = model.Email;
-            student.Gender = model.Gender;
-            student.Phone = model.Phone;
-
-            //automapper  _mapper.Map(model,student); 
-
-            _context.Students.Update(student);
+            if (student == null) return new Response<BaseStudentDto>(HttpStatusCode.NotFound,"student not found");
+            _mapper.Map(model,student);
             await _context.SaveChangesAsync();
             var baseStudent = _mapper.Map<BaseStudentDto>(student);
-
             return new Response<BaseStudentDto>(baseStudent);
         }
         catch (Exception ex)
@@ -132,7 +91,7 @@ public class StudentService : IStudentService
         try
         {
             var student = await _context.Students.FindAsync(id);
-            if (student == null) return new Response<string>(HttpStatusCode.NoContent);
+            if (student == null) return new Response<string>(HttpStatusCode.NotFound,"not found");
             _context.Students.Remove(student);
             await _context.SaveChangesAsync();
             return new Response<string>("Successfuly deleted student");

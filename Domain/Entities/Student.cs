@@ -14,7 +14,12 @@ public class Student
     public string Address { get; set; }
     [MaxLength(13)]
     public string Phone { get; set; }
-    public char Gender { get; set; }
+    public Gender Gender { get; set; }
     public DateTime BirthDate { get; set; }
     public DateTime JoinDate { get; set; }
+}
+
+public enum Gender{
+    Male,
+    Female
 }

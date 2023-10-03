@@ -1,4 +1,7 @@
 ﻿using Domain;
+using Domain.DTOs.StudentDTOs;
+using Domain.Filters;
+using Domain.Wrapper;
 using Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 namespace WebApi.Controllers;
@@ -10,16 +13,19 @@ public class StudentController : ControllerBase
     public StudentController(IStudentService service)=>_service = service;
 
     [HttpGet("GetStudentsAsync")]
-    public async Task<Response<List<GetStudentDto>>> GetStudentsAsync()=>await _service.GetStudentsAsync();
+    public async Task<PaginationResponse<List<GetStudentDto>>> GetStudentsAsync(GetStudentFilter filter)=>await _service.GetStudentsAsync(filter);
 
     [HttpGet("GetStudentByIdAsync")]
     public async Task<Response<GetStudentDto>> GetStudentByIdAsync(int id)=>await _service.GetStudentByIdAsync(id);
     
-    [HttpPost("AddStudentAsync")]
-    public async Task<Response<AddStudentDto>> AddStudentAsync([FromBody]AddStudentDto model)=>await _service.AddStudentAsync(model);
+    [HttpPost("AddStudent")]
+    public async Task<Response<AddStudentDto>> AddStudentAsync(AddStudentDto model)
+    {
+        return await _service.AddStudentAsync(model);
+    }
 
     [HttpPut("UpdateStudentAsync")]
-    public async Task<Response<BaseStudentDto>> UpdateStudentAsync([FromBody]AddStudentDto model)=>await _service.UpdateStudentAsync(model);
+    public async Task<Response<BaseStudentDto>> UpdateStudentAsync(AddStudentDto model)=>await _service.UpdateStudentAsync(model);
 
     [HttpDelete("DeleteStudentAsync")]
     public async Task<Response<string>> DeleteStudentAsync(int id)=>await _service.DeleteStudentAsync(id);
