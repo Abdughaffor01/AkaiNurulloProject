@@ -18,8 +18,3 @@ public class Student
     public DateTime BirthDate { get; set; }
     public DateTime JoinDate { get; set; }
 }
-
-public enum Gender{
-    Male,
-    Female
-}

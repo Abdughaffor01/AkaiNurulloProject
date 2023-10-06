@@ -20,17 +20,14 @@ public class StudentService : IStudentService
     public async Task<PaginationResponse<List<GetStudentDto>>> GetStudentsAsync(GetStudentFilter filter)
     {
         var students = _context.Students.AsQueryable();
-            if (filter.Name != null)
-            {
-                students = students.Where(st => st.FirstName.Contains(filter.Name));
-            }
+        if (filter.Name != null) students = students.Where(st => st.FirstName.Contains(filter.Name));
 
-            filter = new GetStudentFilter(filter.PageNumber, filter.PageSize);
-            var totalRecords = await students.CountAsync();
-            var paged = students.Skip((filter.PageNumber - 1) * filter.PageSize).Take(filter.PageSize).ToList();
-            var mappedStudents=_mapper.Map<List<GetStudentDto>>(paged);
+        filter = new GetStudentFilter(filter.PageNumber, filter.PageSize);
+        var totalRecords = await students.CountAsync();
+        var paged = students.Skip((filter.PageNumber - 1) * filter.PageSize).Take(filter.PageSize).ToListAsync();
+        var mappedStudents = _mapper.Map<List<GetStudentDto>>(paged);
 
-            return new PaginationResponse<List<GetStudentDto>>(mappedStudents,filter.PageNumber,filter.PageSize,totalRecords);
+        return new PaginationResponse<List<GetStudentDto>>(mappedStudents, filter.PageNumber, filter.PageSize, totalRecords);
     }
 
     public async Task<Response<GetStudentDto>> GetStudentByIdAsync(int id)
